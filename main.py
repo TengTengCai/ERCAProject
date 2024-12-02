@@ -1,27 +1,37 @@
-# This is a sample Python script.
+import argparse
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+from openpyxl.reader.excel import load_workbook
 from paddlenlp import Taskflow
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+
+class ReviewAnalysis(object):
+    def __init__(self, data_file):
+        self.data_file_path = data_file
+        schema = [{"评价维度": ["观点词", "情感倾向[正向,负向,未提及]"]}]
+        self.senta1 = Taskflow("sentiment_analysis", model="uie-senta-base", schema=schema)
+        self.senta2 = Taskflow("sentiment_analysis", model="skep_ernie_1.0_large_ch")
 
 
-    # senta = Taskflow("sentiment_analysis", model="skep_ernie_1.0_large_ch")
-    schema = [{"评价维度": ["观点词", "情感倾向[正向,负向,未提及]"]}]
-    senta1 = Taskflow("sentiment_analysis", model="uie-senta-base", schema=schema)
-    senta2 = Taskflow("sentiment_analysis", model="skep_ernie_1.0_large_ch")
-    result1 = senta1("这东西甚至很有磁性，所以你可以把它放在冰箱上，而不是埋在抽屉里。超级实用和出色的设计。 值得所有的便士。")
-    result2 = senta2("这东西甚至很有磁性，所以你可以把它放在冰箱上，而不是埋在抽屉里。超级实用和出色的设计。 值得所有的便士。")
-    print(result1)
-    print(result2)
+    def load_data(self):
+        wb = load_workbook(self.data_file_path)
+        ws = wb.active
+        mr = ws.max_row
+
+        data = []
+        data_list = ws[f"E2:E{mr}"]
+        for row in data_list:
+            for cell in row:
+                data.append(cell.value)
+        return data
+
+    def run(self):
+        pass
 
 
-
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print_hi('PyCharm')
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--file_path", default="datafile/B00S93EQUK-US-Reviews-20241202.xlsx", type=str, help="The data path of sentiment analysis.")
+    args = parser.parse_args()
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    ra = ReviewAnalysis(args.file_path)
+    ra.run()
